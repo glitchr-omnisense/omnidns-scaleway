@@ -1,6 +1,6 @@
 # omnidns/scaleway
 
-Scaleway for [omniscient/omnidns](https://github.com/glitchr-studio/omnidns), under any PHP host:
+Scaleway for [omnisense/omnidns](https://github.com/glitchr-omnisense/omnidns), under any PHP host:
 whether a domain is free, registering and renewing it, the project's domains and their terms,
 their name servers, and the records of their zones - Scaleway's Domains and DNS API (v2beta1) on
 the application's HTTP client (any `symfony/http-client-contracts` implementation).

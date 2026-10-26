@@ -3,7 +3,7 @@
     "type": "library",
     "description": "Omnidns's Scaleway, under any PHP host: whether a domain is free, registering and renewing it, the project's domains and their terms, their name servers, and the records of their zones - Scaleway's Domains and DNS API with a secret key, on the application's HTTP client.",
     "keywords": ["dns", "domain", "registrar", "scaleway", "dns-records", "framework-agnostic", "omnidns"],
-    "homepage": "https://github.com/glitchr-studio/omnidns-scaleway",
+    "homepage": "https://github.com/glitchr-omnisense/omnidns-scaleway",
     "license": "MIT",
     "authors": [
         {
@@ -13,7 +13,7 @@
     ],
     "require": {
         "php": ">=8.2",
-        "omniscient/omnidns": "^1.0@dev",
+        "omnisense/omnidns": "^1.0@dev",
         "symfony/http-client-contracts": "^3.0"
     },
     "require-dev": {
