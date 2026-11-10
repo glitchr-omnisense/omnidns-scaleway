@@ -108,6 +108,14 @@ project_id to register a domain.`).
 - No owner, a duration outside 1 to 10 years: `InvalidArgumentException`; no `project_id` to
   register: `InvalidConfigException`.
 
+## Usage policy
+
+`policy.json` (omnisense/contracts' schema, read on 2026-11-10, `ScalewayProvider::POLICY`): none
+published for the Domains and DNS API: unknown. Rights unknown.
+A key is required. Through omnidns's registry each call is checked against it and counted, a 429
+and its Retry-After hold every next call (`UsageLimitReachedException`); a site may tighten it
+(`policy`), never loosen it. See the core's [usage policies](https://github.com/glitchr-omnisense/omnidns/blob/1.x/docs/policies.md).
+
 ## Verified, and not
 
 `Tests/ScalewayProviderTest.php`, on recorded answers written from Scaleway's API reference (not

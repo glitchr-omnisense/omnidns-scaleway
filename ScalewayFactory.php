@@ -34,6 +34,6 @@ final class ScalewayFactory extends ProviderFactory
 
     protected function build(Config $c): ProviderInterface
     {
-        return new ScalewayProvider($this->http, (string) $c->string('secret_key'), $c->string('project_id'), $c->string('endpoint') ?? ScalewayProvider::ENDPOINT);
+        return new ScalewayProvider($this->http, (string) $c->string('secret_key'), $c->string('project_id'), $c->string('endpoint') ?? ScalewayProvider::ENDPOINT, $c->backoff());
     }
 }

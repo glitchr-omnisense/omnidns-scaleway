@@ -1,0 +1,37 @@
+{
+    "$schema": "https://github.com/glitchr-omnisense/contracts/blob/1.x/resources/usage-policy.schema.json",
+    "provider": "scaleway",
+    "rateLimits": null,
+    "rights": {
+        "commercial": "unknown",
+        "openSourceRequired": null,
+        "caching": {
+            "permission": "unknown",
+            "maxTtl": null
+        },
+        "storage": "unknown",
+        "redistribution": "unknown",
+        "attribution": {
+            "required": false,
+            "text": null,
+            "url": null,
+            "where": []
+        },
+        "licence": null
+    },
+    "requirements": {
+        "key": true,
+        "userAgent": {
+            "required": false,
+            "pattern": null
+        }
+    },
+    "provenance": {
+        "terms": "https://www.scaleway.com/en/contracts/",
+        "policy": "https://www.scaleway.com/en/developers/api/domains-and-dns/",
+        "verifiedAt": "2026-11-10",
+        "declaredBy": "maintainer",
+        "contact": null,
+        "notes": "Scaleway publishes no rate limit for its Domains and DNS API as of 2026-11-10 (the rate limits it documents are the Generative APIs'; the API reference answered 403 to the reading); unknown, not declared. A 429 and its Retry-After are honoured. A secret key (X-Auth-Token) is required. Nothing read on what an API answer may be used for: rights unknown."
+    }
+}

@@ -18,6 +18,9 @@ use Omnidns\Model\Order;
 use Omnidns\Model\Record;
 use Omnidns\NameserversInterface;
 use Omnidns\RegistrarInterface;
+use Omnisense\Contracts\Policy\Backoff;
+use Omnisense\Contracts\Policy\DeclaresUsagePolicyInterface;
+use Omnisense\Contracts\Policy\UsagePolicy;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
@@ -26,8 +29,13 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  * domains, a zone's name servers and records - a record changed through the
  * zone's PATCH of changes (add, set by id, delete by id).
  */
-final class ScalewayProvider implements AvailabilityInterface, RegistrarInterface, DomainsInterface, NameserversInterface, DnsInterface
+final class ScalewayProvider implements AvailabilityInterface, RegistrarInterface, DomainsInterface, NameserversInterface, DnsInterface, DeclaresUsagePolicyInterface
 {
+    /** Scaleway's usage policy, as its terms read on the day it says (provenance.verifiedAt). */
+    public const POLICY = __DIR__.'/policy.json';
+
+    private static ?UsagePolicy $policy = null;
+
     public const ENDPOINT = 'https://api.scaleway.com/domain/v2beta1';
     private const PAGE = 100;
 
@@ -36,6 +44,7 @@ final class ScalewayProvider implements AvailabilityInterface, RegistrarInterfac
         private readonly string $secretKey,
         private readonly ?string $projectId = null,
         private readonly string $endpoint = self::ENDPOINT,
+        private readonly ?Backoff $backoff = null,
     ) {
     }
 
@@ -49,12 +58,17 @@ final class ScalewayProvider implements AvailabilityInterface, RegistrarInterfac
         return 'Scaleway';
     }
 
+    public function usagePolicy(): UsagePolicy
+    {
+        return self::$policy ??= UsagePolicy::fromFile(self::POLICY);
+    }
+
     public function capabilities(): Capabilities
     {
         return new Capabilities(true, true, true, true, true, Record::TYPES, [
             'https://www.scaleway.com/en/contracts/',
             'https://www.scaleway.com/en/developers/api/domains-and-dns/',
-        ]);
+        ], $this->usagePolicy());
     }
 
     public function check(string $domain): Availability
@@ -255,6 +269,6 @@ final class ScalewayProvider implements AvailabilityInterface, RegistrarInterfac
      */
     private function call(string $method, string $path, array $options, string $what): array
     {
-        return Json::request($this->http, $method, rtrim($this->endpoint, '/').$path, ['headers' => ['X-Auth-Token' => $this->secretKey, 'Accept' => 'application/json']] + $options, 'Scaleway', $what);
+        return Json::request($this->http, $method, rtrim($this->endpoint, '/').$path, ['headers' => ['X-Auth-Token' => $this->secretKey, 'Accept' => 'application/json']] + $options, 'Scaleway', $what, $this->backoff);
     }
 }
