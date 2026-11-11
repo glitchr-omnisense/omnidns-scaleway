@@ -9,6 +9,10 @@ use Omnidns\Model\Record;
 use Omnidns\Registry;
 use Omnidns\Scaleway\ScalewayFactory;
 use Omnidns\Scaleway\ScalewayProvider;
+use Omnidns\Exception\UsageLimitReachedException;
+use Omnisense\Contracts\Policy\PolicyGuard;
+use Omnisense\Contracts\Policy\RateLimit;
+use Omnisense\Contracts\Policy\UsagePolicy;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -128,6 +132,25 @@ final class ScalewayProviderTest extends TestCase
         $registry = new Registry([new ScalewayFactory((new Router([], ''))->client())], ['scw' => ['factory' => 'scaleway', 'options' => ['secret_key' => 'sk']]]);
 
         self::assertInstanceOf(ScalewayProvider::class, $registry->get('scw'));
+    }
+
+    public function testEachPageAfterTheFirstIsCounted(): void
+    {
+        $guard = new PolicyGuard(UsagePolicy::builder('scaleway')->limit(RateLimit::perDay(1, 'records'))->build(), exception: UsageLimitReachedException::class);
+        $this->router = new Router([
+            'GET /dns-zones/example.fr/records?page=1&page_size=100' => ['records' => [['id' => 'a', 'type' => 'A', 'name' => '', 'data' => '192.0.2.1', 'ttl' => 300]], 'total_count' => 3],
+            'GET /dns-zones/example.fr/records?page=2&page_size=100' => ['records' => [['id' => 'b', 'type' => 'A', 'name' => 'www', 'data' => '192.0.2.2', 'ttl' => 300]], 'total_count' => 3],
+        ], ScalewayProvider::ENDPOINT);
+        $provider = new ScalewayProvider($this->router->client(), 'sk', pages: $guard);
+
+        try {
+            $provider->records('example.fr');
+            self::fail('The third page went out over the limit.');
+        } catch (UsageLimitReachedException $e) {
+            self::assertSame('1/day/application/records', $e->limit?->id());
+        }
+        self::assertCount(2, $this->router->requests, 'pages 1 and 2 (counted); the third never fetched');
+        self::assertSame(0, $guard->remaining('records'));
     }
 
     /** @param array<string, mixed> $routes */

@@ -20,6 +20,7 @@ use Omnidns\NameserversInterface;
 use Omnidns\RegistrarInterface;
 use Omnisense\Contracts\Policy\Backoff;
 use Omnisense\Contracts\Policy\DeclaresUsagePolicyInterface;
+use Omnisense\Contracts\Policy\PolicyGuard;
 use Omnisense\Contracts\Policy\UsagePolicy;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -45,7 +46,25 @@ final class ScalewayProvider implements AvailabilityInterface, RegistrarInterfac
         private readonly ?string $projectId = null,
         private readonly string $endpoint = self::ENDPOINT,
         private readonly ?Backoff $backoff = null,
+        /** the provider's guard for a listing's further pages (Config::guard()); null: not counted */
+        private readonly ?PolicyGuard $pages = null,
     ) {
+    }
+
+    /**
+     * A listing's page: the first as it is (the registry's guard counts the
+     * operation), each further one through the provider's guard
+     * (Config::guard()), checked before it is sent and counted after.
+     *
+     * @template T
+     *
+     * @param \Closure(): T $fetch
+     *
+     * @return T
+     */
+    private function page(int $page, string $operation, \Closure $fetch): mixed
+    {
+        return 1 === $page || null === $this->pages ? $fetch() : $this->pages->call($operation, $fetch);
     }
 
     public function getName(): string
@@ -128,7 +147,7 @@ final class ScalewayProvider implements AvailabilityInterface, RegistrarInterfac
     {
         $domains = [];
         for ($page = 1; ; ++$page) {
-            $answer = $this->call('GET', '/registrar/domains', ['query' => array_filter(['page' => $page, 'page_size' => self::PAGE, 'project_id' => $this->projectId])], 'the domains');
+            $answer = $this->page($page, 'domains', fn () => $this->call('GET', '/registrar/domains', ['query' => array_filter(['page' => $page, 'page_size' => self::PAGE, 'project_id' => $this->projectId])], 'the domains'));
             foreach (Json::list($answer, 'domains') as $item) {
                 if (null !== $name = Json::string($item, 'domain')) {
                     $domains[] = $name;
@@ -181,7 +200,7 @@ final class ScalewayProvider implements AvailabilityInterface, RegistrarInterfac
         $records = [];
         $seen = 0;
         for ($page = 1; ; ++$page) {
-            $answer = $this->call('GET', "/dns-zones/$zone/records", ['query' => array_filter(['page' => $page, 'page_size' => self::PAGE, 'type' => null === $type ? null : strtoupper($type), 'name' => null === $name ? null : Record::normalizeName($name)], static fn ($v) => null !== $v)], "the records of $zone");
+            $answer = $this->page($page, 'records', fn () => $this->call('GET', "/dns-zones/$zone/records", ['query' => array_filter(['page' => $page, 'page_size' => self::PAGE, 'type' => null === $type ? null : strtoupper($type), 'name' => null === $name ? null : Record::normalizeName($name)], static fn ($v) => null !== $v)], "the records of $zone"));
             $list = Json::list($answer, 'records');
             foreach ($list as $data) {
                 $record = self::record($data);

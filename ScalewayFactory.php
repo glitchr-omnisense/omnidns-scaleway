@@ -5,6 +5,7 @@ namespace Omnidns\Scaleway;
 use Omnidns\Config;
 use Omnidns\ProviderFactory;
 use Omnidns\ProviderInterface;
+use Omnisense\Contracts\Policy\UsagePolicy;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
@@ -34,6 +35,6 @@ final class ScalewayFactory extends ProviderFactory
 
     protected function build(Config $c): ProviderInterface
     {
-        return new ScalewayProvider($this->http, (string) $c->string('secret_key'), $c->string('project_id'), $c->string('endpoint') ?? ScalewayProvider::ENDPOINT, $c->backoff());
+        return new ScalewayProvider($this->http, (string) $c->string('secret_key'), $c->string('project_id'), $c->string('endpoint') ?? ScalewayProvider::ENDPOINT, $c->backoff(), $c->guard(UsagePolicy::fromFile(ScalewayProvider::POLICY)));
     }
 }
