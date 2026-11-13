@@ -5,6 +5,13 @@ whether a domain is free, registering and renewing it, the project's domains and
 their name servers, and the records of their zones - Scaleway's Domains and DNS API (v2beta1) on
 the application's HTTP client (any `symfony/http-client-contracts` implementation).
 
+```sh
+composer require omnisense/omnidns omnidns/scaleway
+```
+
+It needs a Scaleway account and an API key (the `secret_key` option); a registration or a renewal is paid for. Its tests run on recorded answers and need
+none; omnidns's README has a first call on a recorded client.
+
 ```php
 use Omnidns\Registry;
 use Omnidns\Scaleway\ScalewayFactory;
